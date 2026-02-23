@@ -1,136 +1,126 @@
-# Turborepo starter
+# OpenRouter
 
-This Turborepo starter is maintained by the Turborepo core team.
+A self-hosted LLM routing API that proxies requests across multiple AI providers — OpenAI, Anthropic, Google Gemini — through a single OpenAI-compatible endpoint. Built with Bun, Elysia, Prisma, and React.
 
-## Using this example
+## What it does
 
-Run the following command:
+- Routes chat completion requests to the cheapest or most available provider for a given model
+- Tracks per-key credit usage and deducts based on token cost per provider
+- Lets users manage API keys, top up credits, and browse available models through a dashboard
 
-```sh
-npx create-turbo@latest
+## Stack
+
+| Layer         | Technology                           |
+| ------------- | ------------------------------------ |
+| Runtime       | Bun                                  |
+| API framework | Elysia                               |
+| Database ORM  | Prisma (PostgreSQL)                  |
+| Frontend      | React 19, Tailwind CSS v4, shadcn/ui |
+| Monorepo      | Turborepo                            |
+
+**Apps**
+
+- `apps/backend` — auth, API key management, model catalog, payments (port 3000)
+- `apps/api` — the actual LLM proxy endpoint (port 4000)
+- `apps/frontend` — dashboard UI (port 3001)
+- `packages/db` — shared Prisma client
+
+## Prerequisites
+
+- [Bun](https://bun.sh) >= 1.2
+- PostgreSQL database
+- API keys for the providers you want to support (OpenAI, Anthropic, Google)
+
+## Getting started
+
+```bash
+git clone https://github.com/your-username/openrouter
+cd openrouter
+bun install
 ```
 
-## What's inside?
+Set up environment variables. Create `.env` files in `apps/backend`, `apps/api`, and `packages/db`:
 
-This Turborepo includes the following packages/apps:
+```env
+# packages/db/.env
+DATABASE_URL=postgresql://user:password@localhost:5432/openrouter
 
-### Apps and Packages
+# apps/backend/.env
+JWT_SECRET=your-jwt-secret
+DATABASE_URL=postgresql://user:password@localhost:5432/openrouter
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+# apps/api/.env
+DATABASE_URL=postgresql://user:password@localhost:5432/openrouter
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GOOGLE_API_KEY=...
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Run database migrations:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+cd packages/db
+bunx prisma migrate deploy
 ```
 
-### Develop
+Start all services:
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+bun dev
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Or run a specific app:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+turbo dev --filter=backend
+turbo dev --filter=frontend
+turbo dev --filter=api
 ```
 
-### Remote Caching
+## API usage
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+The proxy is OpenAI-compatible. Point your existing client at `http://localhost:4000`:
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+curl http://localhost:4000/api/v1/chat/completions \
+  -H "Authorization: Bearer sk-or-v1-yourkey" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "anthropic/claude-3-5-sonnet",
+    "messages": [{ "role": "user", "content": "Hello" }]
+  }'
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+The `model` field follows the format `company/model-name`. The backend resolves which provider to use and handles billing automatically.
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## Database schema overview
+
+- `User` — email/password auth, credit balance
+- `ApiKey` — per-user keys with credit tracking and enable/disable toggle
+- `Model` + `Company` — model catalog
+- `Provider` + `ModelProviderMapping` — maps models to providers with per-token pricing
+- `OnrampTransaction` — credit top-up history
+- `Conversation` — request logs
+
+## Project structure
 
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+.
+├── apps/
+│   ├── api/          # LLM proxy (Elysia, port 4000)
+│   ├── backend/      # REST API (Elysia, port 3000)
+│   └── frontend/     # Dashboard (React, port 3001)
+└── packages/
+    ├── db/           # Prisma schema + client
+    └── ui/           # Shared React components
 ```
 
-## Useful Links
+## Development notes
 
-Learn more about the power of Turborepo:
+- The frontend uses Eden Treaty for end-to-end type-safe API calls — no manual type definitions needed for client-server communication
+- Provider selection for a model is currently random across all mapped providers. You can extend `apps/api/src/index.ts` to implement cost-based or latency-based routing
+- Credits are stored as integers. The current formula is `(inputTokens * inputCost + outputTokens * outputCost) / 10`
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
-# openrouter
+## License
+
+MIT
