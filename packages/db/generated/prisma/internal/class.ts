@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace.ts"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.4.0",
-  "engineVersion": "ab56fe763f921d033a6c195e7ddeb3e255bdbb57",
+  "clientVersion": "7.4.1",
+  "engineVersion": "55ae170b1ced7fc6ed07a15f110549408c501bb3",
   "activeProvider": "postgresql",
   "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel User {\n  id                 Int                 @id @default(autoincrement())\n  email              String              @unique\n  password           String\n  credits            Int                 @default(1000)\n  apiKeys            ApiKey[]\n  onrampTransactions OnrampTransaction[]\n  conversations      Conversation[]\n}\n\nmodel ApiKey {\n  id              Int            @id @default(autoincrement())\n  userId          Int\n  name            String\n  apiKey          String         @unique\n  disabled        Boolean        @default(false)\n  deleted         Boolean        @default(false)\n  lastUsed        DateTime?\n  creditsConsumed Int            @default(0)\n  user            User           @relation(fields: [userId], references: [id])\n  conversations   Conversation[]\n}\n\nmodel Company {\n  id      Int     @id @default(autoincrement())\n  name    String\n  website String\n  models  Model[]\n}\n\nmodel Model {\n  id                    Int                    @id @default(autoincrement())\n  name                  String\n  slug                  String\n  companyId             Int\n  company               Company                @relation(fields: [companyId], references: [id])\n  modelProviderMappings ModelProviderMapping[]\n}\n\nmodel Provider {\n  id                    Int                    @id @default(autoincrement())\n  name                  String\n  website               String\n  modelProviderMappings ModelProviderMapping[]\n}\n\nmodel ModelProviderMapping {\n  id              Int            @id @default(autoincrement())\n  modelId         Int\n  providerId      Int\n  inputTokenCost  Int\n  outputTokenCost Int\n  model           Model          @relation(fields: [modelId], references: [id])\n  provider        Provider       @relation(fields: [providerId], references: [id])\n  conversations   Conversation[]\n}\n\nmodel OnrampTransaction {\n  id     Int    @id @default(autoincrement())\n  userId Int\n  amount Int\n  status String\n  user   User   @relation(fields: [userId], references: [id])\n}\n\nmodel Conversation {\n  id                     Int                  @id @default(autoincrement())\n  userId                 Int\n  apiKeyId               Int\n  modelProviderMappingId Int\n  input                  String\n  output                 String\n  inputTokenCount        Int\n  outputTokenCount       Int\n  user                   User                 @relation(fields: [userId], references: [id])\n  apiKey                 ApiKey               @relation(fields: [apiKeyId], references: [id])\n  modelProviderMapping   ModelProviderMapping @relation(fields: [modelProviderMappingId], references: [id])\n}\n",
   "runtimeDataModel": {
@@ -174,7 +174,7 @@ export interface PrismaClient<
    * ])
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
+   * Read more in our [docs](https://www.prisma.io/docs/orm/prisma-client/queries/transactions).
    */
   $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): runtime.Types.Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
