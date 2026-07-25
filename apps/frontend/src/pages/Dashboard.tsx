@@ -42,7 +42,7 @@ export function Dashboard() {
     0
   );
   const modelCount = modelsQuery.data?.models?.length ?? 0;
-  const isLoading = apiKeysQuery.isLoading;
+  const isLoading = apiKeysQuery.isPending;
 
   return (
     <DashboardLayout>

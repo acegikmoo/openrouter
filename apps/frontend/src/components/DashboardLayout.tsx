@@ -55,13 +55,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* Footer */}
         <div className="px-3 py-4 border-t border-border/50">
-          <Link
-            to="/signin"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+          <button
+            onClick={() => {
+              document.cookie = "auth=; max-age=0; path=/";
+              window.location.href = "/signin";
+            }}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors w-full"
           >
             <LogOut className="size-4" />
             Sign out
-          </Link>
+          </button>
         </div>
       </aside>
 

@@ -54,7 +54,7 @@ export function Credits() {
             </div>
           </CardHeader>
           <CardContent>
-            {profileQuery.isLoading ? (
+            {profileQuery.isPending ? (
               <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
                 <Loader2 className="size-4 animate-spin" />
                 Loading balance...

@@ -88,8 +88,12 @@ export function ApiKeys() {
   });
 
   const copyToClipboard = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedId(id);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+    } catch {
+      // Clipboard not available (HTTP context, denied permission)
+    }
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -251,6 +255,7 @@ export function ApiKeys() {
                             size="sm"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => toggleReveal(key.id)}
+                            aria-label={revealedKeys.has(key.id) ? "Hide key" : "Show key"}
                           >
                             {revealedKeys.has(key.id) ? (
                               <EyeOff className="size-3" />
@@ -263,6 +268,7 @@ export function ApiKeys() {
                             size="sm"
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => copyToClipboard(key.apiKey, key.id)}
+                            aria-label="Copy key to clipboard"
                           >
                             {copiedId === key.id ? (
                               <CheckCircle2 className="size-3 text-emerald-400" />
@@ -301,7 +307,7 @@ export function ApiKeys() {
                               })
                             }
                             disabled={toggleMutation.isPending}
-                            title={key.disabled ? "Enable key" : "Disable key"}
+                            aria-label={key.disabled ? "Enable key" : "Disable key"}
                           >
                             {key.disabled ? (
                               <ToggleLeft className="size-4 text-muted-foreground" />
@@ -312,9 +318,13 @@ export function ApiKeys() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteMutation.mutate(key.id)}
+                            onClick={() => {
+                              if (window.confirm(`Delete key "${key.name}"? This cannot be undone.`)) {
+                                deleteMutation.mutate(key.id);
+                              }
+                            }}
                             disabled={deleteMutation.isPending}
-                            title="Delete key"
+                            aria-label="Delete key"
                           >
                             <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
                           </Button>
