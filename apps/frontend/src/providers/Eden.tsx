@@ -2,7 +2,8 @@ import { treaty } from "@elysiajs/eden";
 import type { App } from "backend";
 import { createContext, useContext, type ReactNode } from "react";
 
-const client = treaty<App>('localhost:3000', {
+const origin = typeof window !== "undefined" ? window.location.origin : "";
+const client = treaty<App>(origin, {
   fetch: {
     credentials: "include"
   }

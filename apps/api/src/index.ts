@@ -1,7 +1,10 @@
 import bearer from "@elysiajs/bearer";
+import cors from "@elysiajs/cors";
+import { staticPlugin } from "@elysiajs/static";
 import { openapi } from "@elysiajs/openapi";
 import { prisma } from "db";
 import { Elysia, t } from "elysia";
+import { app as backendApp } from "backend";
 import { Conversation } from "./types";
 import { Gemini } from "./llms/Gemini";
 import { OpenAi } from "./llms/OpenAi";
@@ -153,8 +156,17 @@ async function recordUsage(
 }
 
 const app = new Elysia()
+  .use(cors({
+    origin: process.env.NODE_ENV === "production" ? false : true,
+    credentials: true
+  }))
   .use(bearer())
   .use(openapi())
+  .use(staticPlugin({
+    assets: "apps/api/public",
+    prefix: "/"
+  }))
+  .use(backendApp)
   .post("/api/v1/chat/completions", async ({ status, bearer: apiKey, body }) => {
     const model = body.model;
     const resolved = await resolveProvider(model, apiKey ?? "");
@@ -245,8 +257,18 @@ const app = new Elysia()
     return response;
   }, {
     body: Conversation
-  }).listen(4000);
+  })
+  .get("/*", async () => {
+    const file = Bun.file("apps/api/public/index.html");
+    if (await file.exists()) {
+      return new Response(file, {
+        headers: { "Content-Type": "text/html" }
+      });
+    }
+    return new Response("Not found", { status: 404 });
+  })
+  .listen({ port: process.env.PORT ?? 8080, hostname: "0.0.0.0" });
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `\u{1F98A} Elysia is running at ${app.server?.hostname}:${app.server?.port}`
 );

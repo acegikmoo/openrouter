@@ -245,7 +245,7 @@ export function Landing() {
             <span className="text-xs text-muted-foreground">OpenRouter</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            &copy; 2026 acegikmoo. All rights reserved.
+            &copy; 2026 phraakture. All rights reserved.
           </p>
         </div>
       </footer>
